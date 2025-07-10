@@ -1,16 +1,16 @@
+require('dotenv').config();
 const express = require("express");
 const axios = require("axios");
 
 const app = express();
 
-// Read from environment variables
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 let refreshToken = process.env.REFRESH_TOKEN;
 let accessToken = "d5fab88bc501305b9036eb78c5ecd70e89f2f15e";
 let athleteId = process.env.ATHLETE_ID;
 
-// Automatically refresh access token
+// Refresh access token from Strava
 async function refreshAccessToken() {
   try {
     const response = await axios.post("https://www.strava.com/oauth/token", null, {
@@ -23,21 +23,20 @@ async function refreshAccessToken() {
     });
 
     accessToken = response.data.access_token;
-    refreshToken = response.data.refresh_token; // may rotate
+    refreshToken = response.data.refresh_token;
     console.log("✅ Access token refreshed");
   } catch (error) {
     console.error("❌ Error refreshing token:", error.response?.data || error.message);
   }
 }
 
-// Initial token refresh and refresh hourly
 refreshAccessToken();
-setInterval(refreshAccessToken, 1000 * 60 * 60); // every hour
+setInterval(refreshAccessToken, 1000 * 60 * 60); // refresh hourly
 
-// Serve mileage on root route
+// Root route — clean output for Wix iframe
 app.get("/", async (req, res) => {
   if (!accessToken) {
-    return res.send("Access token not yet available. Try again shortly.");
+    return res.send("Loading...");
   }
 
   try {
@@ -57,26 +56,34 @@ app.get("/", async (req, res) => {
       <html>
         <head>
           <style>
+            @font-face {
+              font-family: 'SF Pro Display';
+              font-weight: 600;
+              src: local('SF Pro Display Semibold'),
+                   local('SFProDisplay-Semibold');
+            }
             body {
-              font-family: sans-serif;
-              font-size: 24px;
               margin: 0;
+              background: transparent;
+              color: #6E6E6E;
+              font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+              font-weight: 600;
               display: flex;
               align-items: center;
               justify-content: center;
               height: 100vh;
-              background: #f7f7f7;
+              font-size: 32px;
             }
           </style>
         </head>
         <body>
-          <p>You’ve run <strong>${miles}</strong> miles this year.</p>
+          ${miles} mi
         </body>
       </html>
     `);
   } catch (err) {
     console.error("❌ Failed to fetch stats:", err.message);
-    res.send("Could not fetch stats from Strava.");
+    res.send("Error");
   }
 });
 
