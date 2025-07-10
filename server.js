@@ -1,14 +1,16 @@
+require('dotenv').config();
 const express = require("express");
 const axios = require("axios");
+
 const app = express();
 
-const CLIENT_ID = "167734";
-const CLIENT_SECRET = "f4e86440a5d39c23f1ac70a8c3c97a599a5332ce";
-let refreshToken = "2f3364220c8cfcfb1fa25e7bcda323552119fd30";
-let accessToken = "d5fab88bc501305b9036eb78c5ecd70e89f2f15e";
-let athleteId = "160300263";
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+let refreshToken = process.env.REFRESH_TOKEN;
+let accessToken = "";
+let athleteId = process.env.ATHLETE_ID;
 
-// Automatically refresh token every hour
+// Refresh the access token from Strava
 async function refreshAccessToken() {
   try {
     const res = await axios.post("https://www.strava.com/oauth/token", null, {
@@ -21,15 +23,16 @@ async function refreshAccessToken() {
     });
 
     accessToken = res.data.access_token;
-    refreshToken = res.data.refresh_token; // update if it rotates
-    console.log("🔄 Token refreshed");
+    refreshToken = res.data.refresh_token; // update if rotated
+    console.log("✅ Access token refreshed");
   } catch (err) {
-    console.error("❌ Error refreshing token:", err.response?.data || err.message);
+    console.error("❌ Token refresh error:", err.response?.data || err.message);
   }
 }
 
-setInterval(refreshAccessToken, 1000 * 60 * 60); // refresh every hour
-refreshAccessToken(); // initial fetch
+// Refresh token every hour
+setInterval(refreshAccessToken, 1000 * 60 * 60);
+refreshAccessToken(); // refresh at start
 
 app.get("/", async (req, res) => {
   if (!accessToken) {
@@ -53,7 +56,15 @@ app.get("/", async (req, res) => {
       <html>
         <head>
           <style>
-            body { font-family: sans-serif; font-size: 24px; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+            body {
+              font-family: sans-serif;
+              font-size: 24px;
+              margin: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+            }
           </style>
         </head>
         <body>
@@ -62,9 +73,10 @@ app.get("/", async (req, res) => {
       </html>
     `);
   } catch (err) {
+    console.error("❌ Failed to fetch athlete stats:", err.message);
     res.send("Failed to fetch stats.");
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
