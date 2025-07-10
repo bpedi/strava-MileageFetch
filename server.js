@@ -4,16 +4,17 @@ const axios = require("axios");
 
 const app = express();
 
+// Read from environment variables
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 let refreshToken = process.env.REFRESH_TOKEN;
-let accessToken = "";
+let accessToken = "d5fab88bc501305b9036eb78c5ecd70e89f2f15e";
 let athleteId = process.env.ATHLETE_ID;
 
-// Refresh the access token from Strava
+// Automatically refresh access token
 async function refreshAccessToken() {
   try {
-    const res = await axios.post("https://www.strava.com/oauth/token", null, {
+    const response = await axios.post("https://www.strava.com/oauth/token", null, {
       params: {
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
@@ -22,21 +23,22 @@ async function refreshAccessToken() {
       },
     });
 
-    accessToken = res.data.access_token;
-    refreshToken = res.data.refresh_token; // update if rotated
+    accessToken = response.data.access_token;
+    refreshToken = response.data.refresh_token; // may rotate
     console.log("✅ Access token refreshed");
-  } catch (err) {
-    console.error("❌ Token refresh error:", err.response?.data || err.message);
+  } catch (error) {
+    console.error("❌ Error refreshing token:", error.response?.data || error.message);
   }
 }
 
-// Refresh token every hour
-setInterval(refreshAccessToken, 1000 * 60 * 60);
-refreshAccessToken(); // refresh at start
+// Initial token refresh and refresh hourly
+refreshAccessToken();
+setInterval(refreshAccessToken, 1000 * 60 * 60); // every hour
 
+// Serve mileage on root route
 app.get("/", async (req, res) => {
   if (!accessToken) {
-    return res.send("Access token not ready.");
+    return res.send("Access token not yet available. Try again shortly.");
   }
 
   try {
@@ -64,6 +66,7 @@ app.get("/", async (req, res) => {
               align-items: center;
               justify-content: center;
               height: 100vh;
+              background: #f7f7f7;
             }
           </style>
         </head>
@@ -73,10 +76,10 @@ app.get("/", async (req, res) => {
       </html>
     `);
   } catch (err) {
-    console.error("❌ Failed to fetch athlete stats:", err.message);
-    res.send("Failed to fetch stats.");
+    console.error("❌ Failed to fetch stats:", err.message);
+    res.send("Could not fetch stats from Strava.");
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server is running on port ${PORT}`));
