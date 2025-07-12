@@ -2,7 +2,7 @@
 
 For my engineering portfolio, I wanted a clean way to showcase how many miles I've run this year. Unfortunately, Strava’s built-in sharing tools and widgets didn’t match the look and feel of my website.
 
-To solve this, I created a simple JavaScript backend service that automatically fetches my year-to-date running mileage from the Strava API. The service is hosted on [Render](https://render.com) and embedded into my Wix portfolio site via an iframe for seamless integration.
+To solve this, I created a simple JavaScript backend service that automatically fetches my year-to-date running mileage from the Strava API. The service is hosted on [Render](https://render.com) and embedded into my Wix portfolio site via an iframe.
 
 ---
 
