@@ -71,7 +71,7 @@ app.get("/", async (req, res) => {
               align-items: center;
               justify-content: center;
               height: 100vh;
-              font-size: 64px;
+              font-size: 18.3vw;
             }
           </style>
         </head>
